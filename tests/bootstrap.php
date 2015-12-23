@@ -1,2 +1,2 @@
 <?php
-include_once('../AutoLoader.php');
+include_once '../AutoLoader.php';

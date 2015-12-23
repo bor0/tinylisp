@@ -12,7 +12,20 @@ class TinyLisp
      */
     private function tokenize($code)
     {
-        $tokens = explode(" ", trim(str_replace("(", " ( ", str_replace(")", " ) ", $code))));
+        $tokens = explode(
+            " ",
+            trim(
+                str_replace(
+                    "(",
+                    " ( ",
+                    str_replace(
+                        ")",
+                        " ) ",
+                        str_replace("\n", "", $code)
+                    )
+                )
+            )
+        );
 
         return array_filter($tokens, function ($val) {
             return $val != '';
@@ -83,7 +96,23 @@ class TinyLisp
      */
     public function evaluate($params, &$env, $multiple_env = false)
     {
-        if ($params[0] == 'begin') {
+        if (is_numeric($params)) {
+            return (float)$params;
+        } elseif (is_string($params)) {
+            if ($multiple_env) {
+                for ($i = 0; $i < count($env); $i++) {
+                    if (isset($env[$i][$params])) {
+                        return $env[$i][$params];
+                    }
+                }
+            } elseif (isset($env[$params])) {
+                return $env[$params];
+            } else {
+                throw new Exception("undefined atom $params");
+            }
+        } elseif (!is_array($params)) {
+            return $params;
+        } elseif ($params[0] == 'begin') {
             for ($i = 1; $i < count($params) - 1; $i++) {
                 $this->evaluate($params[$i], $env, $multiple_env);
             }
@@ -103,20 +132,24 @@ class TinyLisp
             $parms = $params[1];
             $body = $params[2];
 
-            return function ($args) use ($parms, $body, $env) {
-                $newEnv = array(TinyLisp::zip($parms, $args), $env);
 
+            $f = function ($args) use ($parms, $body, &$env) {
+                $newEnv = array(TinyLisp::zip($parms, $args), $env);
                 $x = new TinyLisp();
                 return $x->evaluate($body, $newEnv, true);
             };
+
+            return $f;
         } elseif ($params[0] == 'if') {
             if (count($params) != 4) {
                 throw new Exception("bad syntax for if");
             }
 
-            $ret = $this->evaluate($params[1], $env, $multiple_env) ? $params[2] : $params[3];
+            $ret = $this->evaluate($params[1], $env, $multiple_env)
+                ? $this->evaluate($params[2], $env, $multiple_env)
+                : $this->evaluate($params[3], $env, $multiple_env);
 
-            return $this->evaluate($ret, $env, $multiple_env);
+            return $ret; //this->evaluate($ret, $env, $multiple_env);
         } elseif ($params[0] == 'define') {
             if (count($params) != 3) {
                 throw new Exception("bad syntax for define");
@@ -171,22 +204,6 @@ class TinyLisp
                 array($this->evaluate($params[1], $env, $multiple_env)),
                 ($this->evaluate($params[2], $env, $multiple_env))
             );
-        } elseif (is_numeric($params)) {
-            return (float)$params;
-        } elseif (is_string($params)) {
-            if ($multiple_env) {
-                for ($i = 0; $i < count($multiple_env); $i++) {
-                    if (isset($env[$i][$params])) {
-                        return $env[$i][$params];
-                    }
-                }
-            } elseif (isset($env[$params])) {
-                return $env[$params];
-            } else {
-                throw new Exception("undefined atom $params");
-            }
-        } elseif (!is_array($params)) {
-            return $params;
         } else {
             $proc = $this->evaluate($params[0], $env, $multiple_env);
             $args = array();
@@ -195,7 +212,13 @@ class TinyLisp
                 $args[] = $this->evaluate($params[$i], $env, $multiple_env);
             }
 
-            return call_user_func_array($proc, array($args));
+            if (is_callable($proc)) {
+                return $proc($args);
+            } elseif (is_array($proc) && method_exists($proc[0], $proc[1])) {
+                return call_user_func_array($proc, array($args));
+            } else {
+                throw new Exception("Can't parse " . print_r($params, true));
+            }
         }
     }
 
