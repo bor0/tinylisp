@@ -157,7 +157,7 @@ class TinyLisp
      * @param array $env Environment to be used
      * @return mixed Result
      */
-    public function run($code, &$env)
+    public function run($code, &$env = array())
     {
         $tokens = $this->parse($this->tokenize($code));
         return !empty($tokens) ? $this->evaluate($tokens, $env) : null;
