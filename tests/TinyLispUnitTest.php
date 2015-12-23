@@ -1,5 +1,9 @@
 <?php
-class TinyLispTest extends PHPUnit_Framework_TestCase
+/**
+ * Unit tests for the project
+ * @author bsitnikovski
+ */
+class TinyLispUnitTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
@@ -104,8 +108,8 @@ class TinyLispTest extends PHPUnit_Framework_TestCase
 
     public function testExistingAtom()
     {
-        $env = array("x" => 123);
-        $this->assertEquals(123, $this->tl->run("x", $env));
+        $this->tl->initEnvironment(array("x" => 123));
+        $this->assertEquals(123, $this->tl->run("x"));
     }
 
     public function testNonExistingAtom()
@@ -127,10 +131,7 @@ class TinyLispTest extends PHPUnit_Framework_TestCase
 
     public function testDefinedFunction()
     {
-        $env = array(
-            "+" => array("TinyLispTest", "AdditionFunction")
-        );
-
-        $this->assertEquals(10, $this->tl->run("(+ 1 2 3 4)", $env));
+        $this->tl->initEnvironment(array("+" => array("TinyLispUnitTest", "AdditionFunction")));
+        $this->assertEquals(10, $this->tl->run("(+ 1 2 3 4)"));
     }
 }

@@ -1,10 +1,38 @@
 <?php
 /**
+ * Helper class for initializing environment
+ * @author bsitnikovski
+ */
+class Environment
+{
+    public $v = array();
+
+    public function Environment($v)
+    {
+        $this->v = $v;
+    }
+}
+
+/**
  * A really tiny and extensible lisp interpreter
  * @author bsitnikovski
  */
 class TinyLisp
 {
+    const NONE = '__NONE__';
+
+    public $env;
+
+    public function initEnvironment($environment = array())
+    {
+        $this->env = new Environment($environment);
+    }
+
+    public function TinyLisp($environment = array())
+    {
+        $this->initEnvironment($environment);
+    }
+
     /**
      * Function that turns code to tokens
      * @param string $code
@@ -88,36 +116,52 @@ class TinyLisp
         return $zipped;
     }
 
+    private function findInEnv($env, $params)
+    {
+        if (!($env instanceof Environment)) {
+            return self::NONE;
+        }
+
+        foreach ($env->v as $key => $value) {
+            if ($value instanceof Environment) {
+                $val = $this->findInEnv($value, $params);
+                if ($val !== self::NONE) {
+                    return $val;
+                }
+            } elseif ($key === $params) {
+                return $value;
+            }
+        }
+
+        return self::NONE;
+    }
+
     /**
      * Function that evaluates a given syntax tree
      * @param array $params
      * @param array $env Environment to be used
      * @return mixed Result
      */
-    public function evaluate($params, &$env, $multiple_env = false)
+    public function evaluate($params)
     {
         if (is_numeric($params)) {
             return (float)$params;
         } elseif (is_string($params)) {
-            if ($multiple_env) {
-                for ($i = 0; $i < count($env); $i++) {
-                    if (isset($env[$i][$params])) {
-                        return $env[$i][$params];
-                    }
-                }
-            } elseif (isset($env[$params])) {
-                return $env[$params];
-            } else {
+            $ret = $this->findInEnv($this->env, $params);
+ 
+            if ($ret === self::NONE) {
                 throw new Exception("undefined atom $params");
+            } else {
+                return $ret;
             }
         } elseif (!is_array($params)) {
             return $params;
         } elseif ($params[0] == 'begin') {
             for ($i = 1; $i < count($params) - 1; $i++) {
-                $this->evaluate($params[$i], $env, $multiple_env);
+                $this->evaluate($params[$i]);
             }
 
-            return $this->evaluate($params[$i], $env, $multiple_env);
+            return $this->evaluate($params[$i]);
         } elseif ($params[0] == 'quote') {
             if (count($params) != 2) {
                 throw new Exception("bad syntax for quote");
@@ -131,12 +175,12 @@ class TinyLisp
 
             $parms = $params[1];
             $body = $params[2];
+            $env = $this->env;
 
-
-            $f = function ($args) use ($parms, $body, &$env) {
-                $newEnv = array(TinyLisp::zip($parms, $args), $env);
-                $x = new TinyLisp();
-                return $x->evaluate($body, $newEnv, true);
+            $f = function ($args) use ($parms, $body, $env) {
+                $newEnv = new Environment(TinyLisp::zip($parms, $args));
+                $x = new TinyLisp(array($newEnv, $env));
+                return $x->evaluate($body);
             };
 
             return $f;
@@ -145,53 +189,58 @@ class TinyLisp
                 throw new Exception("bad syntax for if");
             }
 
-            $ret = $this->evaluate($params[1], $env, $multiple_env)
-                ? $this->evaluate($params[2], $env, $multiple_env)
-                : $this->evaluate($params[3], $env, $multiple_env);
+            $ret = $this->evaluate($params[1]) ? $this->evaluate($params[2]) : $this->evaluate($params[3]);
 
-            return $ret; //this->evaluate($ret, $env, $multiple_env);
+            return $ret;
         } elseif ($params[0] == 'define') {
             if (count($params) != 3) {
                 throw new Exception("bad syntax for define");
             }
 
-            if ($multiple_env) {
-                $env[0][$params[1]] = $this->evaluate($params[2], $env, $multiple_env);
+            $multiple_scoped = false;
+            foreach ($this->env as $key => $value) {
+                if ($value instanceof Environment) {
+                    $multiple_scoped = true;
+                    break;
+                }
+            }
+
+            if ($multiple_scoped) {
+                // multiple scopes, apply this only to the top most
+                $this->env->v[0][$params[1]] = $this->evaluate($params[2]);
             } else {
-                $env[$params[1]] = $this->evaluate($params[2], $env, $multiple_env);
+                $this->env->v[$params[1]] = $this->evaluate($params[2]);
             }
         } elseif ($params[0] == 'print') {
             if (count($params) != 2) {
                 throw new Exception("bad syntax for print");
             }
 
-            print_r($this->evaluate($params[1], $env, $multiple_env));
+            print_r($this->evaluate($params[1]));
         } elseif ($params[0] == 'eq?') {
             if (count($params) != 3) {
                 throw new Exception("bad syntax for eq?");
             }
 
-            return $this->evaluate($params[1], $env, $multiple_env)
-                == $this->evaluate($params[2], $env, $multiple_env);
+            return $this->evaluate($params[1]) == $this->evaluate($params[2]);
         } elseif ($params[0] == 'equal?') {
             if (count($params) != 3) {
                 throw new Exception("bad syntax for equal?");
             }
 
-            return $this->evaluate($params[1], $env, $multiple_env)
-                === $this->evaluate($params[2], $env, $multiple_env);
+            return $this->evaluate($params[1]) === $this->evaluate($params[2]);
         } elseif ($params[0] == 'car') {
             if (count($params) != 2) {
                 throw new Exception("bad syntax for car");
             }
 
-            return $this->evaluate($params[1], $env, $multiple_env)[0];
+            return $this->evaluate($params[1])[0];
         } elseif ($params[0] == 'cdr') {
             if (count($params) != 2) {
                 throw new Exception("bad syntax for cdr");
             }
 
-            $retval = $this->evaluate($params[1], $env, $multiple_env);
+            $retval = $this->evaluate($params[1]);
             array_shift($retval);
 
             return $retval;
@@ -201,15 +250,15 @@ class TinyLisp
             }
 
             return array_merge(
-                array($this->evaluate($params[1], $env, $multiple_env)),
-                ($this->evaluate($params[2], $env, $multiple_env))
+                array($this->evaluate($params[1])),
+                ($this->evaluate($params[2]))
             );
         } else {
-            $proc = $this->evaluate($params[0], $env, $multiple_env);
+            $proc = $this->evaluate($params[0]);
             $args = array();
 
             for ($i = 1; $i < count($params); $i++) {
-                $args[] = $this->evaluate($params[$i], $env, $multiple_env);
+                $args[] = $this->evaluate($params[$i]);
             }
 
             if (is_callable($proc)) {
@@ -228,9 +277,9 @@ class TinyLisp
      * @param array $env Environment to be used
      * @return mixed Result
      */
-    public function run($code, &$env = array(), $multiple_env = false)
+    public function run($code)
     {
         $tokens = $this->parse($this->tokenize($code));
-        return !empty($tokens) ? $this->evaluate($tokens, $env, $multiple_env) : null;
+        return !empty($tokens) ? $this->evaluate($tokens) : null;
     }
 }

@@ -22,12 +22,12 @@ $env = array(
 echo "SugarScript LISP machine activated.\n";
 echo "Example: (begin (define user (get-bean (quote Users) 1)) (print (get-property (quote is_admin) user)))\n";
 echo "Example: (print (execute-sql (quote (select id, user_name from users))))\n";
-$x = new TinyLisp();
 
 while (true) {
     echo "> ";
     try {
-        echo $x->run(readline(), $env) . "\n";
+        $x = new TinyLisp($env);
+        echo $x->run(readline()) . "\n";
     } catch (Exception $e) {
         echo "ERROR: {$e->getMessage()}\n";
     }

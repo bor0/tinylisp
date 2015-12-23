@@ -1,7 +1,8 @@
 <phpunit bootstrap="bootstrap.php">
     <testsuites>
         <testsuite name="Basic LISP checks">
-            <file>TinyLispTest.php</file>
+            <file>TinyLispUnitTest.php</file>
+            <file>TinyLispIntegrationTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
