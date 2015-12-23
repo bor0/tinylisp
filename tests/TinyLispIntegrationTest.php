@@ -39,6 +39,9 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $this->tl->run($code), "Program $name did not return correct value");
     }
 
+    /**
+     * Function that provides lisp programs
+     */
     public function programProvider()
     {
         return array(

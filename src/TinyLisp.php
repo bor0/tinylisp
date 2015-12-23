@@ -1,33 +1,25 @@
 <?php
 /**
- * Helper class for initializing environment
- * @author bsitnikovski
- */
-class Environment
-{
-    public $v = array();
-
-    public function Environment($v)
-    {
-        $this->v = $v;
-    }
-}
-
-/**
  * A really tiny and extensible lisp interpreter
  * @author bsitnikovski
  */
 class TinyLisp
 {
-    const NONE = '__NONE__';
-
     public $env;
 
+    /**
+     * Function for initializing environment
+     * @param mixed $v Environment
+     */
     public function initEnvironment($environment = array())
     {
         $this->env = new Environment($environment);
     }
 
+    /**
+     * Default constructor
+     * @param mixed $v Environment
+     */
     public function TinyLisp($environment = array())
     {
         $this->initEnvironment($environment);
@@ -98,45 +90,6 @@ class TinyLisp
     }
 
     /**
-     * Helper function for the implementation of lambdas
-     * when determining multiple scopes, we need to zip arguments with passed values
-     * @param array $array1
-     * @param array $array2
-     * @return array
-     */
-    public static function zip($array1, $array2)
-    {
-        $zipped = array();
-        $l = min(count($array1), count($array2));
-
-        for ($i = 0; $i < $l; $i++) {
-            $zipped[$array1[$i]] = $array2[$i];
-        }
-
-        return $zipped;
-    }
-
-    private function findInEnv($env, $params)
-    {
-        if (!($env instanceof Environment)) {
-            return self::NONE;
-        }
-
-        foreach ($env->v as $key => $value) {
-            if ($value instanceof Environment) {
-                $val = $this->findInEnv($value, $params);
-                if ($val !== self::NONE) {
-                    return $val;
-                }
-            } elseif ($key === $params) {
-                return $value;
-            }
-        }
-
-        return self::NONE;
-    }
-
-    /**
      * Function that evaluates a given syntax tree
      * @param array $params
      * @param array $env Environment to be used
@@ -147,9 +100,9 @@ class TinyLisp
         if (is_numeric($params)) {
             return (float)$params;
         } elseif (is_string($params)) {
-            $ret = $this->findInEnv($this->env, $params);
+            $ret = Common::findInEnv($this->env, $params);
  
-            if ($ret === self::NONE) {
+            if ($ret === Common::NONE) {
                 throw new Exception("undefined atom $params");
             } else {
                 return $ret;
@@ -178,7 +131,7 @@ class TinyLisp
             $env = $this->env;
 
             $f = function ($args) use ($parms, $body, $env) {
-                $newEnv = new Environment(TinyLisp::zip($parms, $args));
+                $newEnv = new Environment(Common::zip($parms, $args));
                 $x = new TinyLisp(array($newEnv, $env));
                 return $x->evaluate($body);
             };

@@ -1,6 +1,6 @@
 <?php
 require_once 'SugarFunction.php';
-require_once 'TinyLisp.php';
+require_once '../AutoLoader.php';
 
 if (!defined('sugarEntry')) {
     define('sugarEntry', true);
