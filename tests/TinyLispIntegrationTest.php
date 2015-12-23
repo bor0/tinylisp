@@ -17,6 +17,10 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
                 return (floatval($args[0]) - floatval($args[1]));
             },
 
+            '<' => function ($args) {
+                return (floatval($args[0]) < floatval($args[1]));
+            },
+
             '<=' => function ($args) {
                 return (floatval($args[0]) <= floatval($args[1]));
             },
@@ -48,6 +52,7 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
             array(
                 'map-impl',
                 '(begin
+                  ; definition of higher-function map
                   (define map
                     (lambda (x y)
                       (if
@@ -67,6 +72,7 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
             array(
                 'factorial',
                 '(begin
+                  ; definition of factorial
                   (define fact (lambda (n) (if (<= n 1) 1 (* n (fact (- n 1))))))
                   (fact 10)
                 )',
@@ -75,6 +81,7 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
             array(
                 'factorial',
                 '(begin
+                  ; definition of range
                   (define range (lambda (a b) (if (= a b) (quote ()) (cons a (range (+ a 1) b)))))
                   (range 0 10)
                 )',
@@ -84,16 +91,46 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
                 'currying-scope',
                 '(begin
                   (define x 1)
-                  (define y
-                    (lambda (z)
-                      (lambda (x)
-                        (+ z x)
-                      )
-                    )
-                  )
+                  (define y (lambda (z) (lambda (x) (+ z x))))
                   ((y 3) 4)
                 )',
                 7
+            ),
+            array(
+                'fib',
+                '(begin
+                  ; definition of fib
+                  (define fib (lambda (n) (if (< n 2) 1 (+ (fib (- n 1)) (fib (- n 2))))))
+                  (fib 10)
+                )',
+                89
+            ),
+            array(
+                'count',
+                '(begin
+                  ; define first to be alias of car
+                  (define first car)
+                  ; define rest to be alias of cdr
+                  (define rest cdr)
+                  ; define atoms count function
+                  (define count (lambda (item L) (if L (+ (equal? item (first L)) (count item (rest L))) 0)))
+                  (list
+                    (count 0 (list 0 1 2 3 0 0))
+                    (count (quote the) (quote (the more the merrier the bigger the better)))
+                  )
+                )',
+                array(3, 4),
+            ),
+            array(
+                'circle-area',
+                '(begin
+                  ; define the Pi number
+                  (define pi 3.1415926535)
+                  ; define function circle-area that takes radius as an input
+                  (define circle-area (lambda (r) (* pi (* r r))))
+                  (circle-area 3)
+                )',
+                28.2743338814
             ),
         );
     }

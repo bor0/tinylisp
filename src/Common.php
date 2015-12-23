@@ -5,7 +5,7 @@
  */
 class Common
 {
-    const NONE = '__NONE__';
+    const NONE = false;
 
     /**
      * Helper function for the implementation of lambdas

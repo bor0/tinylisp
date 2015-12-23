@@ -32,6 +32,19 @@ class TinyLisp
      */
     private function tokenize($code)
     {
+        $lines = explode("\n", $code);
+        $stripped_lines = array();
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if ($line[0] != ';') {
+                $stripped_lines[] = $line;
+            }
+        }
+
+        $code = implode(" ", $stripped_lines);
+
         $tokens = explode(
             " ",
             trim(
@@ -41,7 +54,7 @@ class TinyLisp
                     str_replace(
                         ")",
                         " ) ",
-                        str_replace("\n", "", $code)
+                        $code
                     )
                 )
             )
@@ -109,6 +122,20 @@ class TinyLisp
             }
         } elseif (!is_array($params)) {
             return $params;
+        } elseif ($params[0] == 'list?') {
+            if (count($params) != 2) {
+                throw new Exception("bad syntax for list?");
+            }
+
+            return is_array($params[1]);
+        } elseif ($params[0] == 'list') {
+            $values = array();
+
+            for ($i = 1; $i < count($params); $i++) {
+                $values[] = $this->evaluate($params[$i]);
+            }
+
+            return $values;
         } elseif ($params[0] == 'begin') {
             for ($i = 1; $i < count($params) - 1; $i++) {
                 $this->evaluate($params[$i]);
@@ -158,11 +185,13 @@ class TinyLisp
                 }
             }
 
+            $param = is_array($params[2]) ? $this->evaluate($params[2]) : $params[2];
+
             if ($multiple_scoped) {
                 // multiple scopes, apply this only to the top most
-                $this->env->v[0][$params[1]] = $this->evaluate($params[2]);
+                $this->env->v[0][$params[1]] = $param;
             } else {
-                $this->env->v[$params[1]] = $this->evaluate($params[2]);
+                $this->env->v[$params[1]] = $param;
             }
         } elseif ($params[0] == 'print') {
             if (count($params) != 2) {
@@ -209,6 +238,12 @@ class TinyLisp
         } else {
             $proc = $this->evaluate($params[0]);
             $args = array();
+
+            // for (define first car), $proc may return 'car', in which case we need to re-evaluate
+            if (is_string($proc)) {
+                array_shift($params);
+                return $this->evaluate(array_merge(array($proc), $params));
+            }
 
             for ($i = 1; $i < count($params); $i++) {
                 $args[] = $this->evaluate($params[$i]);
