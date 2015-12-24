@@ -41,6 +41,10 @@ class SugarFunction
      */
     public static function newBean($args)
     {
+        if (count($args) != 2) {
+            throw new Exception("Wrong number of arguments for newBean");
+        }
+
         $bean = BeanFactory::newBean($args[0]);
 
         foreach ($args[1] as $property) {
@@ -97,5 +101,14 @@ class SugarFunction
         $result = $db->query($sql);
 
         return $db->fetchByAssoc($result);
+    }
+
+    public static function arrayToString($args)
+    {
+        if (count($args) != 1) {
+            throw new Exception("Wrong number of arguments for arrayToString");
+        }
+
+        return implode(" ", $args[0]);
     }
 }

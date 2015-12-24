@@ -12,12 +12,13 @@ global $current_user;
 $current_user = BeanFactory::getBean("Users", "1");
 
 $env = array(
-    '*'             => array('SugarFunction', 'multiplication'),
-    '+'             => array('SugarFunction', 'addition'),
-    'new-bean'      => array('SugarFunction', 'newBean'),
-    'get-bean'      => array('SugarFunction', 'getBean'),
-    'get-property'  => array('SugarFunction', 'getProperty'),
-    'execute-sql'   => array('SugarFunction', 'executeSQL'),
+    '*'               => array('SugarFunction', 'multiplication'),
+    '+'               => array('SugarFunction', 'addition'),
+    'new-bean'        => array('SugarFunction', 'newBean'),
+    'get-bean'        => array('SugarFunction', 'getBean'),
+    'get-property'    => array('SugarFunction', 'getProperty'),
+    'execute-sql'     => array('SugarFunction', 'executeSQL'),
+    'array-to-string' => array('SugarFunction', 'arrayToString'),
 );
 
 echo "SugarScript LISP machine activated.\n";
