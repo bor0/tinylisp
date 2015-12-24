@@ -109,6 +109,18 @@ class TinyLispUnitTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Function to test some usages of list and list?
+     */
+    public function testList()
+    {
+        $this->assertEquals(array(1, 2, 3), $this->tl->run("(list 1 2 3)"));
+        $this->assertEquals(array(1, array(2, 3), 3), $this->tl->run("(list 1 (quote (2 3)) 3)"));
+        $this->assertEquals(0, $this->tl->run("(list? 1)"));
+        $this->assertEquals(1, $this->tl->run("(list? (list 1 2 3))"));
+        $this->assertEquals(1, $this->tl->run("(list? (list 1 (quote (2 3)) 3))"));
+    }
+
+    /**
      * Function to test some usages of cons
      */
     public function testCons()

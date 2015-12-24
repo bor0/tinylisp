@@ -40,7 +40,7 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
      */
     public function testProgram($name, $code, $expected)
     {
-        $this->assertEquals($expected, $this->tl->run($code), "Program $name did not return correct value");
+        $this->assertEquals($expected, $this->tl->run($code), "Program '$name' did not return correct value");
     }
 
     /**

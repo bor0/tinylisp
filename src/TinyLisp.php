@@ -125,26 +125,6 @@ class TinyLisp
             }
         } elseif (!is_array($params)) {
             return $params;
-        } elseif ($params[0] == 'list?') {
-            if (count($params) != 2) {
-                throw new Exception("bad syntax for list?");
-            }
-
-            return is_array($params[1]);
-        } elseif ($params[0] == 'list') {
-            $values = array();
-
-            for ($i = 1; $i < count($params); $i++) {
-                $values[] = $this->evaluate($params[$i]);
-            }
-
-            return $values;
-        } elseif ($params[0] == 'begin') {
-            for ($i = 1; $i < count($params) - 1; $i++) {
-                $this->evaluate($params[$i]);
-            }
-
-            return $this->evaluate($params[$i]);
         } elseif ($params[0] == 'quote') {
             if (count($params) != 2) {
                 throw new Exception("bad syntax for quote");
@@ -160,13 +140,11 @@ class TinyLisp
             $body = $params[2];
             $env = $this->env;
 
-            $f = function ($args) use ($parms, $body, $env) {
+            return function ($args) use ($parms, $body, $env) {
                 $newEnv = new Environment(Common::zip($parms, $args));
                 $x = new TinyLisp(array($newEnv, $env));
                 return $x->evaluate($body);
             };
-
-            return $f;
         } elseif ($params[0] == 'if') {
             if (count($params) != 4) {
                 throw new Exception("bad syntax for if");
@@ -181,6 +159,7 @@ class TinyLisp
             }
 
             $multiple_scoped = false;
+
             foreach ($this->env as $key => $value) {
                 if ($value instanceof Environment) {
                     $multiple_scoped = true;
@@ -202,42 +181,6 @@ class TinyLisp
             }
 
             print_r($this->evaluate($params[1]));
-        } elseif ($params[0] == 'eq?') {
-            if (count($params) != 3) {
-                throw new Exception("bad syntax for eq?");
-            }
-
-            return $this->evaluate($params[1]) == $this->evaluate($params[2]);
-        } elseif ($params[0] == 'equal?') {
-            if (count($params) != 3) {
-                throw new Exception("bad syntax for equal?");
-            }
-
-            return $this->evaluate($params[1]) === $this->evaluate($params[2]);
-        } elseif ($params[0] == 'car') {
-            if (count($params) != 2) {
-                throw new Exception("bad syntax for car");
-            }
-
-            return $this->evaluate($params[1])[0];
-        } elseif ($params[0] == 'cdr') {
-            if (count($params) != 2) {
-                throw new Exception("bad syntax for cdr");
-            }
-
-            $retval = $this->evaluate($params[1]);
-            array_shift($retval);
-
-            return $retval;
-        } elseif ($params[0] == 'cons') {
-            if (count($params) != 3) {
-                throw new Exception("bad syntax for cons");
-            }
-
-            return array_merge(
-                array($this->evaluate($params[1])),
-                ($this->evaluate($params[2]))
-            );
         } else {
             $proc = $this->evaluate($params[0]);
             $args = array();
