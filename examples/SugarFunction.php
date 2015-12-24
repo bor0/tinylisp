@@ -36,6 +36,24 @@ class SugarFunction
     }
 
     /**
+     * This public static function is a wrapper for BeanFactory::newBean
+     * @param array $args
+     */
+    public static function newBean($args)
+    {
+        $bean = BeanFactory::newBean($args[0]);
+
+        foreach ($args[1] as $property) {
+            $p = $property[0];
+            $v = $property[1];
+            $bean->$p = $v;
+        }
+        $bean->save();
+
+        return $bean;
+    }
+
+    /**
      * This public static function is a wrapper for BeanFactory::getBean
      * @param array $args
      */

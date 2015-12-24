@@ -37,10 +37,13 @@ class TinyLisp
 
         foreach ($lines as $line) {
             $line = trim($line);
-
-            if ($line[0] != ';') {
-                $stripped_lines[] = $line;
+            for ($i = 0; $i < strlen($line); $i++) {
+                if ($line[$i] == ';') {
+                    break;
+                }
             }
+
+            $stripped_lines[] = substr($line, 0, $i);
         }
 
         $code = implode(" ", $stripped_lines);

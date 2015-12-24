@@ -128,7 +128,7 @@ class TinyLispIntegrationTest extends PHPUnit_Framework_TestCase
                   (define pi 3.1415926535)
                   ; define function circle-area that takes radius as an input
                   (define circle-area (lambda (r) (* pi (* r r))))
-                  (circle-area 3)
+                  (circle-area 3) ; some inline comment
                 )',
                 28.2743338814
             ),
